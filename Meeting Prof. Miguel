@@ -1,0 +1,121 @@
+#include <iostream>
+#include <cstring>
+#include <vector>
+#include <queue>
+#define pb push_back
+#define mp make_pair
+#define MAXN 30
+#define INF 9999
+using namespace std;
+
+typedef pair<int, int> pi;
+
+vector<pi> EM[MAXN];
+vector<pi> ES[MAXN];
+int distM[MAXN], distS[MAXN];
+
+void dijkstra(int graph, int startPoint){
+
+    priority_queue< pi, vector<pi>, greater<pi> > Q;
+    Q.push(mp(0, startPoint));
+    if(graph == 1) { for(int i=0; i < 30; ++i) distS[i] = INF; distS[startPoint] = 0;}
+    else{ for(int i=0; i < 30; ++i) distM[i] = INF; distM[startPoint] = 0;}
+
+    while(!Q.empty()){
+        pi node = Q.top();
+        Q.pop();
+        int d = node.first;
+        int v = node.second;
+        if(graph == 1){
+            if(distS[v] < d) continue;
+        }else{
+            if(distM[v] < d) continue;
+        }
+        //cout << "fuck me" << endl;
+       // vector<pi> E = ES;
+        if(graph == 1) {
+            for(int i=0; i < ES[v].size(); ++i ){
+               // cout << "no" << endl;
+                int nn = ES[v][i].second;
+                //cout << nn << " " << distS[nn] << " " << distS[v] + ES[v][i].first << endl;
+                if(distS[nn] > distS[v] + ES[v][i].first){
+                    distS[nn] = distS[v] + ES[v][i].first;
+                    Q.push(mp(distS[v] + ES[v][i].first, nn));
+           //         cout << "h" << endl;
+                }
+            }
+        }else{
+         //   cout << "d " << endl;
+            for(int i=0; i < EM[v].size(); ++i ){
+                int nn = EM[v][i].second;
+           //     cout << nn << " " << distM[nn] << " " << distM[v] + ES[v][i].first << endl;
+                if(distM[nn] > distM[v] + EM[v][i].first){
+                    distM[nn] = distM[v] + EM[v][i].first;
+                    Q.push(mp(distM[v] + EM[v][i].first, nn));
+               //     cout << "c " << endl;
+                }
+            }
+        }
+    }
+}
+
+int main()
+{
+    char graph, type, source, dest, ESS, ESM;
+    int N, c;
+    while(cin >> N){
+
+        for(int i=0; i < N; ++i){
+            EM[i].clear();
+            ES[i].clear();
+        }
+
+        for(int i=0; i < N; ++i){
+            cin >> graph >> type >> source >> dest >> c;
+
+            if(graph == 'Y'){
+                if(type == 'U'){
+
+                    ES[source-'A'].pb(mp(c,dest-'A'));
+                }else{
+                    ES[source-'A'].pb(mp(c,dest-'A'));
+                    ES[dest-'A'].pb(mp(c, source-'A'));
+                }
+            }else{
+
+                if(type == 'U'){
+                    EM[source-'A'].pb(mp( c, dest-'A'));
+                }else{
+                    EM[source-'A'].pb(mp(c, dest-'A'));
+                    EM[dest-'A'].pb(mp(c, source-'A'));
+                }
+            }
+        }
+            cin >> ESS >> ESM;
+            dijkstra(1, ESS-'A');
+            dijkstra(2, ESM-'A');
+
+            int minimalEnergy = INF;
+
+            for(int i=0; i < 30; ++i){
+                if(distM[i] == INF || distS[i] == INF) continue;
+                minimalEnergy = min(minimalEnergy, distM[i] + distS[i]);
+            }
+
+            if(minimalEnergy != INF){
+                cout << minimalEnergy;
+                for(int i=0; i < 30; ++i){
+                    int currentDistance = distM[i] + distS[i];
+                 //   cout << (char)(i+'A') << " " << currentDistance << " " << distM[i] << " " << endl;
+                    if(currentDistance == minimalEnergy){
+                       cout << " " << (char)(i+'A');
+                    }
+                }
+                cout << endl;
+            }else{
+                cout << "You will never meet." << endl;
+            }
+
+    }
+    return 0;
+}
