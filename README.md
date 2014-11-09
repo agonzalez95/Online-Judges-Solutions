@@ -1,2 +1,2 @@
-SPOJ-Solutions
+Online Judges Solutions
 ==============
