@@ -1,0 +1,177 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstring>
+#define mp make_pair
+#define pb push_back
+#define INF 99999
+using namespace std;
+
+typedef pair<int, int> pi;
+
+struct MinCostMaxFlow {
+    struct Edge{
+        int u, v, cap, flow, cost;
+    };
+
+    vector<Edge> edges;
+    vector<vector<int> > adjlist;
+    vector<int> p;
+    vector<int> dist;
+    vector<int> pushed;
+
+    MinCostMaxFlow(int N){
+        adjlist.resize(N);
+        p.resize(N);
+        dist.resize(N);
+        pushed.resize(N);
+    }
+
+    void AddEdge(int u, int v, int cap, int cost){
+        Edge f = {u, v, cap, 0, cost}, b = {v, u, 0, 0, -cost};
+        adjlist[u].pb(edges.size()); edges.pb(f);
+        adjlist[v].pb(edges.size()); edges.pb(b);
+    }
+
+    bool Dijkstra(int s, int t){
+        fill(p.begin(), p.end(), -1);
+        fill(dist.begin(), dist.end(), INF);
+        dist[s] = 0;
+        pushed[s] = INF;
+        priority_queue< pi > q;
+        q.push(mp(0, s));
+        while(!q.empty()){
+            pi front = q.top();
+            int d = -front.first;
+            int u = front.second;
+            q.pop();
+            if(u == t) break;
+            if(d > dist[u]) continue;
+            for(int i=0; i < adjlist[u].size(); ++i){
+                int id = adjlist[u][i], to = edges[id].v;
+                int cost = edges[id].cost;
+                if(dist[u] + cost < dist[to] && edges[id].flow < edges[id].cap){
+                    dist[to] = dist[u] + cost;
+                    p[to] = id;
+                    pushed[to] = min(pushed[u], edges[id].cap - edges[id].flow);
+                    q.push(mp(-dist[to], to));
+                }
+            }
+        }
+        if(p[t] == -1) return false;
+
+        for(int k = p[t]; k != -1; k = p[edges[k].u]){
+            edges[k].flow += pushed[t];
+            edges[k ^ 1].flow -= pushed[t];
+        }
+        return true;
+    }
+
+    pair<int, int> Get(int s, int t){
+    	for(int i=0; i < edges.size(); ++i){
+    		edges[i].flow = 0;
+    	}
+    	int totalFlow = 0, totalCost = 0;
+    	while(Dijkstra(s, t)){
+    		totalFlow += pushed[t];
+    		totalCost += dist[t] * pushed[t];
+
+    	}
+    	return mp(totalFlow, totalCost);
+
+    }
+};
+
+
+char map[55][55];
+int rows, columns;
+
+int dirX[] = {1, -1, 0, 0}, dirY[] = {0, 0, 1, -1};
+int bfs(pi start, pi finish){
+
+    queue< pair<pi, int> > Q;
+
+    Q.push(mp(start, 0));
+    bool visited[55][55];
+    memset(visited, false, sizeof(visited));
+    visited[start.first][start.second] = true;
+    while(!Q.empty()){
+        pi loc = Q.front().first;
+        int d = Q.front().second;
+
+        
+        if(loc.first == finish.first && loc.second == finish.second) return d;
+        Q.pop();
+
+        for(int i=0; i < 4; ++i){
+            int nn = loc.first + dirX[i];
+            int nm = loc.second + dirY[i];
+            if(nn < 1 || nm < 1 || nn > rows || nm > columns || visited[nn][nm]) continue;
+            if(map[nn][nm] == '#') continue;
+            Q.push(mp( mp(nn, nm), d+1));
+            visited[nn][nm] = true;
+        }
+    }
+    return 0;
+}
+int main()
+{
+    int t;
+    cin >> t;
+    while(t--){
+
+        cin >> rows >> columns;
+        pi start_pos, finish_pos;
+        vector< pi > rocks;
+        vector< pi > specialtiles;
+        vector< int > weights;
+        for(int i=1; i <= rows; i++){
+            for(int j=1; j <= columns; j++){
+                cin >> map[i][j];
+                if(map[i][j] == 'i') start_pos = mp(i, j);
+                if(map[i][j] == 't') specialtiles.pb(mp(i, j));
+                if(map[i][j] == 'x') finish_pos = mp(i, j);
+                if(isdigit(map[i][j])){
+                    rocks.pb(mp(i, j));
+                    weights.pb( map[i][j] - '0');
+                }
+            }
+        }
+
+        if(!bfs(start_pos, finish_pos)) {
+            cout << "TRAPPED" << endl;
+            continue;
+        }
+        int rocksVertex = 0, specialTilesVertex = rocks.size()+1;
+        MinCostMaxFlow mcmf (rocks.size() + specialtiles.size() + 5);
+        int source = 0, sink = rocks.size() + specialtiles.size()+4;
+
+        for(int i=0; i < specialtiles.size(); i++){
+            mcmf.AddEdge(specialTilesVertex+i, sink, 1, 0);
+        }
+
+        for(int i=0; i < rocks.size(); ++i){
+            if(bfs(start_pos, rocks[i])){
+                mcmf.AddEdge(source, ++rocksVertex, 1, 0);
+                for(int j=0; j < specialtiles.size(); ++j){
+
+                    pi pos = specialtiles[j];
+                    int d = bfs(rocks[i], pos);
+                    int w = weights[i];
+                    if(d > 0){
+	                    mcmf.AddEdge(rocksVertex, specialTilesVertex+j, 1, w * (d+2));
+                    }
+                }
+            }
+        }
+
+        pi ans = mcmf.Get(source, sink);
+
+        if(ans.first == specialtiles.size()){
+            cout << ans.second << endl;
+        }else{
+            cout << "TRAPPED" << endl;
+        }
+    }
+    return 0;
+}
