@@ -1,0 +1,38 @@
+#include <iostream>
+
+using namespace std;
+string game;
+typedef long long ll;
+int main()
+{
+    ll a, b;
+    int j;
+    while(cin >> a >> b){
+        ll tot = 0;
+        cin >> game;
+
+        bool swapped = true;
+        while(swapped){
+            swapped = false;
+            for(int i=game.length()-1; i > 0; i--){
+                if(game[i] == 'B'){
+    
+                    for(j=0; j < i; j++){
+                        if(game[j] == 'W')break;
+                    }
+
+                    if(game[j] == 'W'){
+                        int dist = i - j;
+                        game[j] = 'B';
+                        game[i] = 'W';
+                        tot += min(dist * (a-b), a);
+                        swapped = true;
+                        break;
+                    }
+                }
+            }
+        }
+        cout << tot << endl;
+    }
+    return 0;
+}
