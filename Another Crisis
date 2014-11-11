@@ -1,0 +1,76 @@
+#include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <vector>
+#define INF 999999
+#define pb push_back
+#define MAXN 111111
+using namespace std;
+
+int n, t;
+vector<int> E[MAXN];
+bool visited[MAXN];
+bool marked[MAXN];
+int children[MAXN];
+int neededAmount[MAXN];
+typedef long long ll;
+
+void dfs(int n){
+
+    visited[n] = true;
+    children[n] = 0;
+    for(int i=0; i < E[n].size(); ++i){
+        int v = E[n][i];
+        if(!visited[v]){
+            children[n]++;
+            dfs(v);
+        }
+    }
+
+    int minAmount = children[n] * t;
+    if(!children[n]) {
+            neededAmount[n] = 1;
+    }else{
+        int actualAmount = 0;
+        int i=0;
+        while(minAmount > (i * 100) ){
+
+            int actualMin = INF;
+            int actualChildren = -1;
+            for(int i=0; i < E[n].size(); ++i){
+                int v = E[n][i];
+                if(actualMin > neededAmount[v] && !marked[v]){
+                    actualMin = neededAmount[v];
+                    actualChildren = v;
+                }
+            }
+            marked[actualChildren] = true;
+            actualAmount += actualMin;
+            i++;
+        }
+        neededAmount[n] = actualAmount;
+    }
+}
+int main()
+{
+    int s;
+    while(cin >> n >> t){
+
+        if(!n && !t) break;
+
+        memset(marked, false, sizeof(marked));
+        memset(visited, false, sizeof(visited));
+
+        for(int i=0; i <= n; ++i)
+            E[i].clear();
+
+        for(int d=1; d <= n; ++d){
+            cin >> s;
+            E[s].pb(d);
+        }
+
+        dfs(0);
+        cout << neededAmount[0] << endl;
+    }
+    return 0;
+}
